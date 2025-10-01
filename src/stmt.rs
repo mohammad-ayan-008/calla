@@ -1,9 +1,17 @@
-use crate::expr::Expr;
+use crate::expr::{Expr, Literal};
 
 #[derive(Debug)]
 pub enum Stmt {
-    print{
-        format_argss:String,
-        expr:Expr
-    }
+    Func {
+        ret_type: String,
+        expr: Vec<Stmt>,
+        name: String,
+    },
+    Return {
+        exp: Expr,
+    },
+    print {
+        format_argss: String,
+        expr: Expr,
+    },
 }

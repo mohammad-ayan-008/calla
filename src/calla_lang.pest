@@ -12,10 +12,28 @@ boolean={"true" | "false"}
 NULL={"null"}
 
 literal={  float | integer | string | boolean | NULL}
+program ={
+  func*
+}
+type={
+   ("int" | "float" | "bool" | "str")
+}
+
+
+identifier = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+func = { 
+  "callable" ~ identifier ~ "(" ~ ")" ~ "->" ~ type ~ "{" ~ stmt*  ~"}"
+
+}
 
 stmt ={
-  printst*
+  printst | ret_st
 }
+ret_st={
+   "return" ~ (exp)~";"
+}
+
 format_specifier ={
    "%d" | "%f"
 }

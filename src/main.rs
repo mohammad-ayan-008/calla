@@ -12,10 +12,7 @@ mod expr;
 mod parser_calla;
 mod stmt;
 
-
-pub fn compile_statement(){
-    
-}
+pub fn compile_statement() {}
 
 fn main() {
     let data = read_to_string("test.calla").unwrap();
@@ -38,6 +35,7 @@ fn main() {
         )
         .unwrap();
 
+    println!("{}", codegen.module.print_to_string().to_string());
     target_machine
         .write_to_file(
             &codegen.module,

@@ -1,0 +1,490 @@
+[
+    Pair {
+        rule: identifier,
+        span: Span {
+            str: "main",
+            start: 9,
+            end: 13,
+        },
+        inner: [],
+    },
+    Pair {
+        rule: type,
+        span: Span {
+            str: "int",
+            start: 17,
+            end: 20,
+        },
+        inner: [],
+    },
+    Pair {
+        rule: stmt,
+        span: Span {
+            str: "print(\"%f\", 200.0+1.0);\n  print(\"%d\", true);\n  print(\"%f\", 1.0+1);",
+            start: 25,
+            end: 91,
+        },
+        inner: [
+            Pair {
+                rule: printst,
+                span: Span {
+                    str: "print(\"%f\", 200.0+1.0);",
+                    start: 25,
+                    end: 48,
+                },
+                inner: [
+                    Pair {
+                        rule: string,
+                        span: Span {
+                            str: "\"%f\"",
+                            start: 31,
+                            end: 35,
+                        },
+                        inner: [],
+                    },
+                    Pair {
+                        rule: exp,
+                        span: Span {
+                            str: "200.0+1.0",
+                            start: 37,
+                            end: 46,
+                        },
+                        inner: [
+                            Pair {
+                                rule: equality,
+                                span: Span {
+                                    str: "200.0+1.0",
+                                    start: 37,
+                                    end: 46,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: comparision,
+                                        span: Span {
+                                            str: "200.0+1.0",
+                                            start: 37,
+                                            end: 46,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: term,
+                                                span: Span {
+                                                    str: "200.0+1.0",
+                                                    start: 37,
+                                                    end: 46,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: factor,
+                                                        span: Span {
+                                                            str: "200.0",
+                                                            start: 37,
+                                                            end: 42,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: unary,
+                                                                span: Span {
+                                                                    str: "200.0",
+                                                                    start: 37,
+                                                                    end: 42,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: primary,
+                                                                        span: Span {
+                                                                            str: "200.0",
+                                                                            start: 37,
+                                                                            end: 42,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: literal,
+                                                                                span: Span {
+                                                                                    str: "200.0",
+                                                                                    start: 37,
+                                                                                    end: 42,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: float,
+                                                                                        span: Span {
+                                                                                            str: "200.0",
+                                                                                            start: 37,
+                                                                                            end: 42,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: term_op,
+                                                        span: Span {
+                                                            str: "+",
+                                                            start: 42,
+                                                            end: 43,
+                                                        },
+                                                        inner: [],
+                                                    },
+                                                    Pair {
+                                                        rule: factor,
+                                                        span: Span {
+                                                            str: "1.0",
+                                                            start: 43,
+                                                            end: 46,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: unary,
+                                                                span: Span {
+                                                                    str: "1.0",
+                                                                    start: 43,
+                                                                    end: 46,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: primary,
+                                                                        span: Span {
+                                                                            str: "1.0",
+                                                                            start: 43,
+                                                                            end: 46,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: literal,
+                                                                                span: Span {
+                                                                                    str: "1.0",
+                                                                                    start: 43,
+                                                                                    end: 46,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: float,
+                                                                                        span: Span {
+                                                                                            str: "1.0",
+                                                                                            start: 43,
+                                                                                            end: 46,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            Pair {
+                rule: printst,
+                span: Span {
+                    str: "print(\"%d\", true);",
+                    start: 51,
+                    end: 69,
+                },
+                inner: [
+                    Pair {
+                        rule: string,
+                        span: Span {
+                            str: "\"%d\"",
+                            start: 57,
+                            end: 61,
+                        },
+                        inner: [],
+                    },
+                    Pair {
+                        rule: exp,
+                        span: Span {
+                            str: "true",
+                            start: 63,
+                            end: 67,
+                        },
+                        inner: [
+                            Pair {
+                                rule: equality,
+                                span: Span {
+                                    str: "true",
+                                    start: 63,
+                                    end: 67,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: comparision,
+                                        span: Span {
+                                            str: "true",
+                                            start: 63,
+                                            end: 67,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: term,
+                                                span: Span {
+                                                    str: "true",
+                                                    start: 63,
+                                                    end: 67,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: factor,
+                                                        span: Span {
+                                                            str: "true",
+                                                            start: 63,
+                                                            end: 67,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: unary,
+                                                                span: Span {
+                                                                    str: "true",
+                                                                    start: 63,
+                                                                    end: 67,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: primary,
+                                                                        span: Span {
+                                                                            str: "true",
+                                                                            start: 63,
+                                                                            end: 67,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: literal,
+                                                                                span: Span {
+                                                                                    str: "true",
+                                                                                    start: 63,
+                                                                                    end: 67,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: boolean,
+                                                                                        span: Span {
+                                                                                            str: "true",
+                                                                                            start: 63,
+                                                                                            end: 67,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            Pair {
+                rule: printst,
+                span: Span {
+                    str: "print(\"%f\", 1.0+1);",
+                    start: 72,
+                    end: 91,
+                },
+                inner: [
+                    Pair {
+                        rule: string,
+                        span: Span {
+                            str: "\"%f\"",
+                            start: 78,
+                            end: 82,
+                        },
+                        inner: [],
+                    },
+                    Pair {
+                        rule: exp,
+                        span: Span {
+                            str: "1.0+1",
+                            start: 84,
+                            end: 89,
+                        },
+                        inner: [
+                            Pair {
+                                rule: equality,
+                                span: Span {
+                                    str: "1.0+1",
+                                    start: 84,
+                                    end: 89,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: comparision,
+                                        span: Span {
+                                            str: "1.0+1",
+                                            start: 84,
+                                            end: 89,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: term,
+                                                span: Span {
+                                                    str: "1.0+1",
+                                                    start: 84,
+                                                    end: 89,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: factor,
+                                                        span: Span {
+                                                            str: "1.0",
+                                                            start: 84,
+                                                            end: 87,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: unary,
+                                                                span: Span {
+                                                                    str: "1.0",
+                                                                    start: 84,
+                                                                    end: 87,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: primary,
+                                                                        span: Span {
+                                                                            str: "1.0",
+                                                                            start: 84,
+                                                                            end: 87,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: literal,
+                                                                                span: Span {
+                                                                                    str: "1.0",
+                                                                                    start: 84,
+                                                                                    end: 87,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: float,
+                                                                                        span: Span {
+                                                                                            str: "1.0",
+                                                                                            start: 84,
+                                                                                            end: 87,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: term_op,
+                                                        span: Span {
+                                                            str: "+",
+                                                            start: 87,
+                                                            end: 88,
+                                                        },
+                                                        inner: [],
+                                                    },
+                                                    Pair {
+                                                        rule: factor,
+                                                        span: Span {
+                                                            str: "1",
+                                                            start: 88,
+                                                            end: 89,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: unary,
+                                                                span: Span {
+                                                                    str: "1",
+                                                                    start: 88,
+                                                                    end: 89,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: primary,
+                                                                        span: Span {
+                                                                            str: "1",
+                                                                            start: 88,
+                                                                            end: 89,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: literal,
+                                                                                span: Span {
+                                                                                    str: "1",
+                                                                                    start: 88,
+                                                                                    end: 89,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: integer,
+                                                                                        span: Span {
+                                                                                            str: "1",
+                                                                                            start: 88,
+                                                                                            end: 89,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    },
+    Pair {
+        rule: literal,
+        span: Span {
+            str: "0",
+            start: 98,
+            end: 99,
+        },
+        inner: [
+            Pair {
+                rule: integer,
+                span: Span {
+                    str: "0",
+                    start: 98,
+                    end: 99,
+                },
+                inner: [],
+            },
+        ],
+    },
+]
+

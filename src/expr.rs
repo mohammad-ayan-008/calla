@@ -1,4 +1,9 @@
-use inkwell::{AddressSpace, values::BasicValueEnum};
+use inkwell::{
+    AddressSpace,
+    builder::BuilderError,
+    types::BasicType,
+    values::{AnyValue, BasicValueEnum},
+};
 
 use crate::codegen::{self, Compiler};
 
@@ -17,14 +22,13 @@ impl Literal {
         compiler: &Compiler<'ctx>,
     ) -> Result<(String, BasicValueEnum<'ctx>), String> {
         match self {
-            Literal::Bool(a)=> {
+            Literal::Bool(a) => {
                 if !*a {
-                let tr = compiler.context.bool_type().const_int(0, false);
-                Ok(("bool".to_owned(), tr.into()))
-                }else {
-                 let tr = compiler.context.bool_type().const_int(1, false);
-                Ok(("bool".to_owned(), tr.into()))
-   
+                    let tr = compiler.context.bool_type().const_int(0, false);
+                    Ok(("bool".to_owned(), tr.into()))
+                } else {
+                    let tr = compiler.context.bool_type().const_int(1, false);
+                    Ok(("bool".to_owned(), tr.into()))
                 }
             }
             Literal::Nil => {
@@ -74,30 +78,149 @@ pub enum Expr {
         right: Box<Expr>,
     },
 }
+
 macro_rules! Operator {
-   (int, $c:expr, $op:tt, $lhs:expr, $rhs:expr, $name:expr) => {{
+    (int, $c:expr, $op:tt, $lhs:expr, $rhs:expr, $name:expr) => {{
         match $op {
-            "+" => $c.builder.build_int_add($lhs.into_int_value(), $rhs.into_int_value(), $name),
-            "-" => $c.builder.build_int_sub($lhs.into_int_value(), $rhs.into_int_value(), $name),
-            "*" => $c.builder.build_int_mul($lhs.into_int_value(), $rhs.into_int_value(), $name),
-            "/" => $c.builder.build_int_signed_div($lhs.into_int_value(), $rhs.into_int_value(), $name),
+            "+" => $c
+                .builder
+                .build_int_add($lhs.into_int_value(), $rhs.into_int_value(), $name),
+            "-" => $c
+                .builder
+                .build_int_sub($lhs.into_int_value(), $rhs.into_int_value(), $name),
+            "*" => $c
+                .builder
+                .build_int_mul($lhs.into_int_value(), $rhs.into_int_value(), $name),
+            "/" => {
+                $c.builder
+                    .build_int_signed_div($lhs.into_int_value(), $rhs.into_int_value(), $name)
+            }
+            ">" => $c.builder.build_int_compare(
+                inkwell::IntPredicate::SGT,
+                $lhs.into_int_value(),
+                $rhs.into_int_value(),
+                $name,
+            ),
+            "<" => $c.builder.build_int_compare(
+                inkwell::IntPredicate::SLT,
+                $lhs.into_int_value(),
+                $rhs.into_int_value(),
+                $name,
+            ),
+            ">=" => $c.builder.build_int_compare(
+                inkwell::IntPredicate::SGE,
+                $lhs.into_int_value(),
+                $rhs.into_int_value(),
+                $name,
+            ),
+            "<=" => $c.builder.build_int_compare(
+                inkwell::IntPredicate::SLE,
+                $lhs.into_int_value(),
+                $rhs.into_int_value(),
+                $name,
+            ),
+            "==" => $c.builder.build_int_compare(
+                inkwell::IntPredicate::EQ,
+                $lhs.into_int_value(),
+                $rhs.into_int_value(),
+                $name,
+            ),
+            "!=" => $c.builder.build_int_compare(
+                inkwell::IntPredicate::NE,
+                $lhs.into_int_value(),
+                $rhs.into_int_value(),
+                $name,
+            ),
             _ => panic!("Unsupported integer operator: "),
         }
         .unwrap()
         .into()
     }};
-   (float, $c:expr, $op:tt, $lhs:expr, $rhs:expr, $name:expr) =>{{
-    match $op {
-            "+" => $c.builder.build_float_add($lhs.into_float_value(), $rhs.into_float_value(), $name),
-            "-" => $c.builder.build_float_sub($lhs.into_float_value(), $rhs.into_float_value(), $name),
-            "*" => $c.builder.build_float_mul($lhs.into_float_value(), $rhs.into_float_value(), $name),
-            "/" => $c.builder.build_float_div($lhs.into_float_value(), $rhs.into_float_value(), $name),
+    (float, $c:expr, $op:tt, $lhs:expr, $rhs:expr, $name:expr) => {{
+        match $op {
+            "+" => $c
+                .builder
+                .build_float_add($lhs.into_float_value(), $rhs.into_float_value(), $name)
+                .unwrap()
+                .into(),
+            "-" => $c
+                .builder
+                .build_float_sub($lhs.into_float_value(), $rhs.into_float_value(), $name)
+                .unwrap()
+                .into(),
+            "*" => $c
+                .builder
+                .build_float_mul($lhs.into_float_value(), $rhs.into_float_value(), $name)
+                .unwrap()
+                .into(),
+            "/" => $c
+                .builder
+                .build_float_div($lhs.into_float_value(), $rhs.into_float_value(), $name)
+                .unwrap()
+                .into(),
+            ">" => $c
+                .builder
+                .build_float_compare(
+                    inkwell::FloatPredicate::OGT,
+                    $lhs.into_float_value(),
+                    $rhs.into_float_value(),
+                    $name,
+                )
+                .unwrap()
+                .into(),
+            "<" => $c
+                .builder
+                .build_float_compare(
+                    inkwell::FloatPredicate::OLT,
+                    $lhs.into_float_value(),
+                    $rhs.into_float_value(),
+                    $name,
+                )
+                .unwrap()
+                .into(),
+            ">=" => $c
+                .builder
+                .build_float_compare(
+                    inkwell::FloatPredicate::OGE,
+                    $lhs.into_float_value(),
+                    $rhs.into_float_value(),
+                    $name,
+                )
+                .unwrap()
+                .into(),
+            "<=" => $c
+                .builder
+                .build_float_compare(
+                    inkwell::FloatPredicate::OLE,
+                    $lhs.into_float_value(),
+                    $rhs.into_float_value(),
+                    $name,
+                )
+                .unwrap()
+                .into(),
+            "==" => $c
+                .builder
+                .build_float_compare(
+                    inkwell::FloatPredicate::OEQ,
+                    $lhs.into_float_value(),
+                    $rhs.into_float_value(),
+                    $name,
+                )
+                .unwrap()
+                .into(),
+            "!=" => $c
+                .builder
+                .build_float_compare(
+                    inkwell::FloatPredicate::ONE,
+                    $lhs.into_float_value(),
+                    $rhs.into_float_value(),
+                    $name,
+                )
+                .unwrap()
+                .into(),
             _ => panic!("Unsupported integer operator: "),
         }
-        .unwrap()
-        .into()
-
-   }}; 
+    }};
 }
 impl Expr {
     pub fn eval<'ctx>(
@@ -114,14 +237,35 @@ impl Expr {
                 match (left.0.as_str(), op.as_str(), right.0.as_str()) {
                     ("float", a, "float") => Ok((
                         right.0.clone(),
-                        Operator!(float,compiler,a,left.1,right.1,"temp_op")
+                        Operator!(float, compiler, a, left.1, right.1, "temp_op"),
                     )),
-                                      ("int", a, "int") => Ok((
+                    ("int", a, "int") => Ok((
                         right.0.clone(),
-                        Operator!(int,compiler,a,left.1,right.1,"temp_op")
+                        Operator!(int, compiler, a, left.1, right.1, "temp_op1"),
                     )),
-                    
+                    ("float", a, "int") => {
+                        let extended = right.1.into_int_value();
 
+                        let f_extend = compiler
+                            .builder
+                            .build_signed_int_to_float(
+                                extended,
+                                compiler.context.f32_type(),
+                                "float",
+                            )
+                            .unwrap();
+                        Ok((
+                            "float".to_owned(),
+                            Operator!(
+                                float,
+                                compiler,
+                                a,
+                                left.1,
+                                f_extend.as_any_value_enum(),
+                                "temp_opf"
+                            ),
+                        ))
+                    }
                     (a, b, c) => Err(format!("cant evaluate {a} {b} {c}")),
                 }
             }
@@ -129,7 +273,7 @@ impl Expr {
                 let value = expr.eval(compiler)?;
                 match (op.as_str(), value.0.as_str()) {
                     ("-", "int") => {
-                        let const_value = compiler.context.i32_type().const_int(1 as u64, true);
+                        let const_value = compiler.context.i32_type().const_int(1_u64, true);
                         Ok((
                             "int".to_string(),
                             compiler

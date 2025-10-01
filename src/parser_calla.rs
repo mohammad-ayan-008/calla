@@ -81,32 +81,77 @@ pub fn parse_ast(pair: Pair<Rule>) -> Result<Expr, String> {
         _ => Err("undef rule".to_owned()),
     }
 }
-
+// Rule::printst => {
+//                             let mut pair1 = inner.into_inner();
+//                             let formatter = pair1.next().unwrap().as_str();
+//                             let expr = parse_ast(pair1.next().unwrap())?;
+//                             stmts.push(Stmt::print { format_argss: formatter[1..formatter.len()-1].to_owned(), expr });
+//                         }
+//
 
 pub fn parse_expr_stmts(source: &str) -> Result<Vec<Stmt>, String> {
-    let parser = CallaParser::parse(Rule::stmt, source).unwrap();
+    // Parse the program
+    let parser = CallaParser::parse(Rule::program, source)
+        .map_err(|e| format!("Parse error: {}", e))?;
     let mut stmts = vec![];
 
     for pair in parser {
         match pair.as_rule() {
-            Rule::stmt => {
+            Rule::program => {
+                // Iterate over top-level functions
                 for inner in pair.into_inner() {
                     match inner.as_rule() {
-                        Rule::printst => {
-                            let mut pair1 = inner.into_inner();
-                            let formatter = pair1.next().unwrap().as_str();
-                            let expr = parse_ast(pair1.next().unwrap())?;
-                            stmts.push(Stmt::print { format_argss: formatter[1..formatter.len()-1].to_owned(), expr });
+                        Rule::func => {
+                            let mut func_inner = inner.into_inner();
+
+                            // First two elements: function name & return type
+                            let fn_name = func_inner.next().unwrap().as_str();
+                            let ret_type = func_inner.next().unwrap().as_str();
+
+                            // Collect statements inside the function
+                            let mut func_stmts = Vec::new();
+                            for stmt_pair in func_inner {
+                                match stmt_pair.as_rule() {
+                                    Rule::stmt => {
+                                        // Each stmt is either print or return
+                                        let inner_stmt = stmt_pair.into_inner().next().unwrap();
+                                        match inner_stmt.as_rule() {
+                                            Rule::printst => {
+                                                let mut print_inner = inner_stmt.into_inner();
+                                                let fmt = print_inner.next().unwrap().as_str();
+                                                let expr = parse_ast(print_inner.next().unwrap())?;
+                                                func_stmts.push(Stmt::print {
+                                                    format_argss: fmt[1..fmt.len()-1].to_owned(),
+                                                    expr,
+                                                });
+                                            }
+                                            Rule::ret_st => {
+                                                let expr = parse_ast(inner_stmt.into_inner().next().unwrap())?;
+                                                func_stmts.push(Stmt::Return { exp: expr });
+                                            }
+                                            _ => return Err("Invalid statement inside function".to_string()),
+                                        }
+                                    }
+                                    _ => return Err("Unexpected rule inside function".to_string()),
+                                }
+                            }
+
+                            // Push the function to the AST
+                            stmts.push(Stmt::Func {
+                                name: fn_name.to_owned(),
+                                ret_type: ret_type.to_owned(),
+                                expr: func_stmts,
+                            });
                         }
-                        _ => return Err("no such statement".to_string()),
+                        _ => return Err("Unexpected top-level rule, expected function".to_string()),
                     }
                 }
             }
-            _ => return Err("unexpected top-level rule".to_string()),
+            _ => return Err("Unexpected top-level rule".to_string()),
         }
     }
 
-    println!("{:?}", stmts);
+    println!("{:#?}", stmts);
     Ok(stmts)
 }
 
