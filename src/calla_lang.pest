@@ -1,0 +1,54 @@
+WHITESPACE = _{ " " | "\t" | NEWLINE }
+
+integer=@{ASCII_DIGIT+}
+
+float=@{ASCII_DIGIT+ ~ "."~ ASCII_DIGIT+}
+
+string=@{"\""~(ASCII_ALPHANUMERIC|" "|"_"|"{"|"}" | "%"|"\\")*~"\""}
+
+
+boolean={"true" | "false"}
+
+NULL={"null"}
+
+literal={  float | integer | string | boolean | NULL}
+
+stmt ={
+  printst*
+}
+format_specifier ={
+   "%d" | "%f"
+}
+
+printst = { "print(" ~ string ~ "," ~ exp ~ ");" }
+
+exp = {
+ equality
+}
+equality = {
+  comparision ~ ((equality_op) ~ comparision)* 
+}
+comparision={
+  term ~ ((comparision_op)~ term)* 
+}
+term ={
+  factor ~ ((term_op) ~ factor)* 
+}
+factor ={
+   unary ~ ((factor_op) ~ unary)* 
+}
+
+unary ={
+(unary_op) ~ unary | primary
+}
+
+primary={
+   literal | "(" ~ exp ~")"
+}
+
+
+equality_op = { "!=" | "==" }
+comparision_op = { ">=" | ">" | "<=" | "<" }
+term_op = { "+" | "-" }
+unary_op={"!" | "-"}
+factor_op = { "*" | "/" }
