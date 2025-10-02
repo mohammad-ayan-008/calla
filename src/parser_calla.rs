@@ -1,3 +1,5 @@
+use std::env::set_var;
+
 use crate::{expr::{Expr, Literal}, stmt::Stmt};
 use pest::{
     Parser,
@@ -73,6 +75,17 @@ pub fn parse_ast(pair: Pair<Rule>) -> Result<Expr, String> {
             } else {
                 parse_ast(first)
             }
+        },
+        Rule::identifier=>{
+            let inner = pair.as_str().to_string();
+            if !(inner.as_str() =="true"|| inner.as_str()== "false"){
+               Ok(Expr::Variable { name: inner })
+            }else {
+                let a = inner == "true";
+               Ok(Expr::Literal {
+                 value: Literal::Bool(a),
+               })
+            }
         }
         Rule::equality => parse_binary(pair.into_inner(), &[Rule::equality_op]),
         Rule::comparision => parse_binary(pair.into_inner(), &[Rule::comparision_op]),
@@ -124,6 +137,15 @@ pub fn parse_expr_stmts(source: &str) -> Result<Vec<Stmt>, String> {
                                                     format_argss: fmt[1..fmt.len()-1].to_owned(),
                                                     expr,
                                                 });
+                                            },
+                                            Rule::var_decl=>{
+                                                let mut this_type = inner_stmt.into_inner();
+
+                                                let ty_data = this_type.next().unwrap();
+                                                println!("{:?}",ty_data);
+                                                let ident = this_type.next().unwrap();
+                                                let expr = parse_ast(this_type.next().unwrap())?; 
+                                                func_stmts.push(Stmt::Var { identifier: ident.as_str().to_owned(), data_type: ty_data.as_str().to_owned(), expr: expr });
                                             }
                                             Rule::ret_st => {
                                                 let expr = parse_ast(inner_stmt.into_inner().next().unwrap())?;

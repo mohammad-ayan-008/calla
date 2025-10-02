@@ -7,6 +7,11 @@ pub enum Stmt {
         expr: Vec<Stmt>,
         name: String,
     },
+    Var{
+        identifier:String,
+        data_type:String,
+        expr:Expr
+    },
     Return {
         exp: Expr,
     },

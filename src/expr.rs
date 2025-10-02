@@ -1,3 +1,5 @@
+
+
 use inkwell::{
     AddressSpace,
     builder::BuilderError,
@@ -15,6 +17,7 @@ pub enum Literal {
     String(String),
     Bool(bool),
     Nil,
+    Ident(String),
 }
 impl Literal {
     pub fn compile_value<'ctx>(
@@ -55,6 +58,7 @@ impl Literal {
                     .unwrap();
                 Ok(("str".to_owned(), str_ptr.as_pointer_value().into()))
             }
+            _=>Err("Literal to type error".into())
         }
     }
 }
@@ -62,6 +66,9 @@ impl Literal {
 #[derive(Debug, Clone)]
 #[allow(unused)]
 pub enum Expr {
+    Variable{
+        name:String
+    },
     Literal {
         value: Literal,
     },
@@ -228,6 +235,14 @@ impl Expr {
         compiler: &codegen::Compiler<'ctx>,
     ) -> Result<(String, BasicValueEnum<'ctx>), String> {
         match self {
+            Expr::Variable { name }=>{
+                if let Some(a) = compiler.variables.get(name){
+                     let var =compiler.builder.build_load(a.1, a.2,"temo").unwrap();
+                     Ok((a.0.clone(),var))
+                }else {
+                    Err(format!("no such variable found {:?}",name))
+                }
+            },
             Expr::Literal { value } => value.compile_value(compiler),
             Expr::Group { value } => value.eval(compiler),
             Expr::Binary { left, op, right } => {

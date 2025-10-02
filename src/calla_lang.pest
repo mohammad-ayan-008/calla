@@ -4,7 +4,7 @@ integer=@{ASCII_DIGIT+}
 
 float=@{ASCII_DIGIT+ ~ "."~ ASCII_DIGIT+}
 
-string=@{"\""~(ASCII_ALPHANUMERIC|" "|"_"|"{"|"}" | "%"|"\\")*~"\""}
+string=@{"\""~(ASCII_ALPHANUMERIC|" "|"_"|"{"|"}" | "%"|"\\"|"."|ASCII_DIGIT)*~"\""}
 
 
 boolean={"true" | "false"}
@@ -15,8 +15,18 @@ literal={  float | integer | string | boolean | NULL}
 program ={
   func*
 }
+
+ptrtype={
+   (
+   "int*" | "float*" | "bool*" | "str*" 
+   )
+}
+
 type={
-   ("int" | "float" | "bool" | "str")
+   (
+   "int" | "float" | "bool" | "str" 
+   )
+
 }
 
 
@@ -26,9 +36,16 @@ func = {
   "callable" ~ identifier ~ "(" ~ ")" ~ "->" ~ type ~ "{" ~ stmt*  ~"}"
 
 }
+pointer_decl={
+  ptrtype ~ identifier ~"="~exp ~ ";"
+}
+var_decl = {
+
+  type ~ identifier ~"="~exp ~ ";"
+}
 
 stmt ={
-  printst | ret_st
+  printst |var_decl| ret_st
 }
 ret_st={
    "return" ~ (exp)~";"
@@ -61,7 +78,7 @@ unary ={
 }
 
 primary={
-   literal | "(" ~ exp ~")"
+   identifier | literal | "(" ~ exp ~")"
 }
 
 

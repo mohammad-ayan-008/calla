@@ -1,10 +1,14 @@
 callable main()->int {
-  print("%f \n", 200.0+1.0);
-  print("%d \n", true);
-  print("%f \n", 1.0+1);
-  print("%d \n",1>1);
-  print("%d \n",1!=1);
-  print("%d \n",1==1);
-  print("%d \n",1<=1);
-  return 5;
+
+  int a = 5;
+  str name = "Ayan";
+  float f = 1.0;
+  bool b = true;
+
+  print("%s \n", name);
+  print("%.2f \n", f);
+  print("%d \n",a);
+  print("%b \n",b);
+  print("%b \n",5>1);
+  return a;
 }
