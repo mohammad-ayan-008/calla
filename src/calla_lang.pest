@@ -32,9 +32,11 @@ type={
 
 identifier = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 
-func = { 
-  "callable" ~ identifier ~ "(" ~ ")" ~ "->" ~ type ~ "{" ~ stmt*  ~"}"
+param = { type ~ identifier }
+params = { param ~ ("," ~ param)* }
 
+func = { 
+  "callable" ~ identifier ~ "(" ~ params? ~ ")" ~ "->" ~ type ~ "{" ~ stmt*  ~"}"
 }
 pointer_decl={
   ptrtype ~ identifier ~"="~exp ~ ";"
@@ -45,8 +47,9 @@ var_decl = {
 }
 
 stmt ={
-  printst |var_decl| ret_st
+  ret_st |printst |var_decl| expr_stmt
 }
+expr_stmt = { exp ~ ";" }
 ret_st={
    "return" ~ (exp)~";"
 }
@@ -57,8 +60,11 @@ format_specifier ={
 
 printst = { "print(" ~ string ~ "," ~ exp ~ ");" }
 
-exp = {
- equality
+exp = { assignment }
+
+assignment = {
+    identifier ~ "=" ~ exp
+    | equality
 }
 equality = {
   comparision ~ ((equality_op) ~ comparision)* 
@@ -76,9 +82,12 @@ factor ={
 unary ={
 (unary_op) ~ unary | primary
 }
-
+fn_call = { "@" ~ identifier ~ "(" ~ (exp ~ ("," ~ exp)*)? ~ ")" }
 primary={
-   identifier | literal | "(" ~ exp ~")"
+   fn_call    |
+   identifier | 
+   literal    | 
+   "(" ~ exp ~")"
 }
 
 

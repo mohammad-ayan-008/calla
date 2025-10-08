@@ -1,13 +1,13 @@
-
+use std::collections::HashMap;
 
 use inkwell::{
-    AddressSpace,
-    builder::BuilderError,
-    types::BasicType,
-    values::{AnyValue, BasicValueEnum},
+    builder::BuilderError, types::{BasicType, BasicTypeEnum}, values::{AnyValue, BasicMetadataValueEnum, BasicValue, BasicValueEnum, PointerValue}, AddressSpace
 };
 
-use crate::codegen::{self, Compiler};
+use crate::{
+    codegen::{self, Compiler},
+    expr,
+};
 
 #[derive(Debug, Clone)]
 #[allow(warnings)]
@@ -58,7 +58,7 @@ impl Literal {
                     .unwrap();
                 Ok(("str".to_owned(), str_ptr.as_pointer_value().into()))
             }
-            _=>Err("Literal to type error".into())
+            _ => Err("Literal to type error".into()),
         }
     }
 }
@@ -66,8 +66,16 @@ impl Literal {
 #[derive(Debug, Clone)]
 #[allow(unused)]
 pub enum Expr {
-    Variable{
-        name:String
+    Variable {
+        name: String,
+    },
+    Assign {
+        name: String,
+        exp: Box<Expr>,
+    },
+    Func_call {
+        name: String,
+        expr: Vec<Expr>,
     },
     Literal {
         value: Literal,
@@ -230,24 +238,83 @@ macro_rules! Operator {
     }};
 }
 impl Expr {
+    pub fn eval_stmts<'ctx>(
+        &self,
+        compiler: &Compiler<'ctx>,
+        expr: &Vec<Expr>,
+        type_loacls: &HashMap<String, (String, BasicTypeEnum<'ctx>,PointerValue<'ctx>)>,
+    ) -> Vec<BasicMetadataValueEnum<'ctx>> {
+        let mut vec = vec![];
+        for i in expr {
+            vec.push(i.eval(compiler, type_loacls).unwrap().1.into());
+        }
+        vec
+    }
     pub fn eval<'ctx>(
         &self,
         compiler: &codegen::Compiler<'ctx>,
+        type_loacls: &HashMap<String, (String, BasicTypeEnum <'ctx>,PointerValue<'ctx>)>,
     ) -> Result<(String, BasicValueEnum<'ctx>), String> {
         match self {
-            Expr::Variable { name }=>{
-                if let Some(a) = compiler.variables.get(name){
-                     let var =compiler.builder.build_load(a.1, a.2,"temo").unwrap();
-                     Ok((a.0.clone(),var))
-                }else {
-                    Err(format!("no such variable found {:?}",name))
+            Expr::Assign { name, exp }=>{
+                if let Some(a) = type_loacls.get(name) {
+                    let var = compiler.builder.build_load(a.1, a.2, "temo").unwrap();
+                    let expr = exp.eval(compiler, type_loacls)?;
+                    compiler.builder.build_store(a.2, expr.1).unwrap();
+                    Ok((a.0.clone(), var))
+                } else if let Some(a) = compiler.variables.get(name) {
+                    let var = compiler.builder.build_load(a.1, a.2, "temo").unwrap();
+                    
+                    let expr = exp.eval(compiler, type_loacls)?;
+                    compiler.builder.build_store(a.2, expr.1).unwrap();
+                    Ok((a.0.clone(), var))
+                } else {
+                    Err(format!("no such variable found {:?}", name))
                 }
+
             },
+            Expr::Func_call { name, expr } => {
+                if let Some(a) = compiler.functions.get(name) {
+                    let val = compiler
+                        .builder
+                        .build_call(
+                            a.1,
+                            &self.eval_stmts(compiler, expr, type_loacls),
+                            "test_call",
+                        )
+                        .unwrap();
+                    if let Some(value) = val.try_as_basic_value().left() {
+                        Ok((a.0.clone(), value))
+                    } else {
+                        Ok((
+                            "nil".to_string(),
+                            compiler
+                                .context
+                                .ptr_type(AddressSpace::default())
+                                .const_null()
+                                .as_basic_value_enum(),
+                        ))
+                    }
+                } else {
+                    Err("unable to find func".to_lowercase())
+                }
+            }
+            Expr::Variable { name } => {
+                if let Some(a) = type_loacls.get(name) {
+                    let var = compiler.builder.build_load(a.1, a.2, "temo").unwrap();
+                    Ok((a.0.clone(), var))
+                } else if let Some(a) = compiler.variables.get(name) {
+                    let var = compiler.builder.build_load(a.1, a.2, "temo").unwrap();
+                    Ok((a.0.clone(), var))
+                } else {
+                    Err(format!("no such variable found {:?}", name))
+                }
+            }
             Expr::Literal { value } => value.compile_value(compiler),
-            Expr::Group { value } => value.eval(compiler),
+            Expr::Group { value } => value.eval(compiler, type_loacls),
             Expr::Binary { left, op, right } => {
-                let left = left.eval(compiler)?;
-                let right = right.eval(compiler)?;
+                let left = left.eval(compiler, type_loacls)?;
+                let right = right.eval(compiler, type_loacls)?;
 
                 match (left.0.as_str(), op.as_str(), right.0.as_str()) {
                     ("float", a, "float") => Ok((
@@ -285,7 +352,7 @@ impl Expr {
                 }
             }
             Expr::Unary { op, expr } => {
-                let value = expr.eval(compiler)?;
+                let value = expr.eval(compiler, type_loacls)?;
                 match (op.as_str(), value.0.as_str()) {
                     ("-", "int") => {
                         let const_value = compiler.context.i32_type().const_int(1_u64, true);

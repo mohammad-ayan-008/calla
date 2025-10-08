@@ -1,10 +1,10 @@
-use std::env::set_var;
+use std::{env::set_var, str::Split};
 
-use crate::{expr::{Expr, Literal}, stmt::Stmt};
-use pest::{
-    Parser,
-    iterators::Pair,
+use crate::{
+    expr::{Expr, Literal},
+    stmt::Stmt,
 };
+use pest::{Parser, iterators::Pair};
 use pest_derive::Parser;
 
 #[derive(Parser)]
@@ -58,6 +58,30 @@ fn parse_binary(
 
 pub fn parse_ast(pair: Pair<Rule>) -> Result<Expr, String> {
     match pair.as_rule() {
+      
+
+   Rule::assignment => {
+    // we don't trust the shape blindly — inspect children safely
+    let mut inner = pair.into_inner();
+    let first = inner.next().ok_or("Empty assignment node")?;
+
+    // If there's no second child, this wasn't an identifier = expr pair;
+    // it must be a nested expression like `equality`, so just parse it.
+    if let Some(second) = inner.next() {
+        // two children present -> expect: identifier, exp
+        if first.as_rule() == Rule::identifier {
+            let name = first.as_str().to_string();
+            let value_expr = parse_ast(second)?; // parse rhs expression safely
+            return Ok(Expr::Assign { name, exp: Box::new(value_expr) });
+        } else {
+            // Not an identifier on LHS — it's malformed for assignment, fallback
+            return Err(format!("Invalid assignment LHS: {:?}", first.as_str()));
+        }
+    } else {
+        // Single child — treat as normal expression (e.g. equality)
+        return parse_ast(first);
+    }
+}
         Rule::exp => parse_ast(pair.into_inner().next().unwrap()),
         Rule::literal => Ok(Expr::Literal {
             value: parse_literal(pair)?,
@@ -75,16 +99,32 @@ pub fn parse_ast(pair: Pair<Rule>) -> Result<Expr, String> {
             } else {
                 parse_ast(first)
             }
-        },
-        Rule::identifier=>{
+        }
+
+        Rule::fn_call => {
+            let mut inner = pair.into_inner(); // fn_call inner: identifier, then possibly exp(s)
+
+            // First item = function name (identifier)
+            let name = inner.next().unwrap().as_str().to_string();
+
+            // The rest (if any) = arguments (expressions)
+            let mut args = Vec::new();
+            for arg_pair in inner {
+                // Each arg is an expression node — so recurse into your `build_expr`
+                args.push(parse_ast(arg_pair)?);
+            }
+
+            Ok(Expr::Func_call { name, expr: args })
+        }
+        Rule::identifier => {
             let inner = pair.as_str().to_string();
-            if !(inner.as_str() =="true"|| inner.as_str()== "false"){
-               Ok(Expr::Variable { name: inner })
-            }else {
+            if !(inner.as_str() == "true" || inner.as_str() == "false") {
+                Ok(Expr::Variable { name: inner })
+            } else {
                 let a = inner == "true";
-               Ok(Expr::Literal {
-                 value: Literal::Bool(a),
-               })
+                Ok(Expr::Literal {
+                    value: Literal::Bool(a),
+                })
             }
         }
         Rule::equality => parse_binary(pair.into_inner(), &[Rule::equality_op]),
@@ -94,18 +134,19 @@ pub fn parse_ast(pair: Pair<Rule>) -> Result<Expr, String> {
         _ => Err("undef rule".to_owned()),
     }
 }
-// Rule::printst => {
-//                             let mut pair1 = inner.into_inner();
-//                             let formatter = pair1.next().unwrap().as_str();
-//                             let expr = parse_ast(pair1.next().unwrap())?;
-//                             stmts.push(Stmt::print { format_argss: formatter[1..formatter.len()-1].to_owned(), expr });
-//                         }
-//
+
+pub fn parse_params<'a>(sp: Split<'a, &'static str>) -> Vec<String> {
+    let mut vec = vec![];
+    for i in sp {
+        println!("->{i}");
+    }
+    vec
+}
 
 pub fn parse_expr_stmts(source: &str) -> Result<Vec<Stmt>, String> {
     // Parse the program
-    let parser = CallaParser::parse(Rule::program, source)
-        .map_err(|e| format!("Parse error: {}", e))?;
+    let parser =
+        CallaParser::parse(Rule::program, source).map_err(|e| format!("Parse error: {}", e))?;
     let mut stmts = vec![];
 
     for pair in parser {
@@ -117,51 +158,80 @@ pub fn parse_expr_stmts(source: &str) -> Result<Vec<Stmt>, String> {
                         Rule::func => {
                             let mut func_inner = inner.into_inner();
 
-                            // First two elements: function name & return type
-                            let fn_name = func_inner.next().unwrap().as_str();
-                            let ret_type = func_inner.next().unwrap().as_str();
-
-                            // Collect statements inside the function
+                            let fn_name = func_inner.next().unwrap().as_str().to_owned();
+                            let mut params = Vec::new();
+                            let mut ret_type = String::new();
                             let mut func_stmts = Vec::new();
-                            for stmt_pair in func_inner {
-                                match stmt_pair.as_rule() {
+
+                            // Iterate through function internals
+                            for inner_pair in func_inner {
+                                match inner_pair.as_rule() {
+                                    Rule::params => {
+                                        for param_pair in inner_pair.into_inner() {
+                                            if param_pair.as_rule() == Rule::param {
+                                                let mut p = param_pair.into_inner();
+                                                let ty = p.next().unwrap().as_str().to_string();
+                                                let name = p.next().unwrap().as_str().to_string();
+                                                params.push((ty, name));
+                                            }
+                                        }
+                                    }
+                                    Rule::r#type => {
+                                        // Return type
+                                        ret_type = inner_pair.as_str().to_string();
+                                    }
                                     Rule::stmt => {
-                                        // Each stmt is either print or return
-                                        let inner_stmt = stmt_pair.into_inner().next().unwrap();
+                                        let inner_stmt = inner_pair.into_inner().next().unwrap();
                                         match inner_stmt.as_rule() {
                                             Rule::printst => {
                                                 let mut print_inner = inner_stmt.into_inner();
                                                 let fmt = print_inner.next().unwrap().as_str();
                                                 let expr = parse_ast(print_inner.next().unwrap())?;
                                                 func_stmts.push(Stmt::print {
-                                                    format_argss: fmt[1..fmt.len()-1].to_owned(),
+                                                    format_argss: fmt[1..fmt.len() - 1].to_owned(),
                                                     expr,
                                                 });
-                                            },
-                                            Rule::var_decl=>{
-                                                let mut this_type = inner_stmt.into_inner();
-
-                                                let ty_data = this_type.next().unwrap();
-                                                println!("{:?}",ty_data);
-                                                let ident = this_type.next().unwrap();
-                                                let expr = parse_ast(this_type.next().unwrap())?; 
-                                                func_stmts.push(Stmt::Var { identifier: ident.as_str().to_owned(), data_type: ty_data.as_str().to_owned(), expr: expr });
+                                            }
+                                            Rule::var_decl => {
+                                                let mut decl_inner = inner_stmt.into_inner();
+                                                let ty =
+                                                    decl_inner.next().unwrap().as_str().to_owned();
+                                                let name =
+                                                    decl_inner.next().unwrap().as_str().to_owned();
+                                                let expr = parse_ast(decl_inner.next().unwrap())?;
+                                                func_stmts.push(Stmt::Var {
+                                                    identifier: name,
+                                                    data_type: ty,
+                                                    expr,
+                                                });
                                             }
                                             Rule::ret_st => {
-                                                let expr = parse_ast(inner_stmt.into_inner().next().unwrap())?;
+                                                let expr = parse_ast(
+                                                    inner_stmt.into_inner().next().unwrap(),
+                                                )?;
                                                 func_stmts.push(Stmt::Return { exp: expr });
                                             }
-                                            _ => return Err("Invalid statement inside function".to_string()),
+                                            Rule::expr_stmt => {
+                                                let exp = parse_ast(
+                                                    inner_stmt.into_inner().next().unwrap(),
+                                                )?;
+                                                func_stmts.push(Stmt::EXPR_STMT { expr: exp });
+                                            }
+                                            _ => {
+                                                return Err(
+                                                    "Invalid statement inside function".to_string()
+                                                );
+                                            }
                                         }
                                     }
-                                    _ => return Err("Unexpected rule inside function".to_string()),
+                                    _ => {}
                                 }
                             }
 
-                            // Push the function to the AST
                             stmts.push(Stmt::Func {
-                                name: fn_name.to_owned(),
-                                ret_type: ret_type.to_owned(),
+                                name: fn_name,
+                                ret_type,
+                                params,
                                 expr: func_stmts,
                             });
                         }
@@ -176,4 +246,3 @@ pub fn parse_expr_stmts(source: &str) -> Result<Vec<Stmt>, String> {
     println!("{:#?}", stmts);
     Ok(stmts)
 }
-

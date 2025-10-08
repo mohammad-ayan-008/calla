@@ -1,14 +1,25 @@
-callable main()->int {
+callable test(str a,int b)->int{
+  print("%s \n",a);
+  int k = b-1;
+  b=12;
+  a="lol";
+  print("%s \n",a);
+  return k;
+}
 
-  int a = 5;
-  str name = "Ayan";
-  float f = 1.0;
-  bool b = true;
+callable test2(float f)->int{
+  print("%f \n",f);
+  return 1;
+}
 
-  print("%s \n", name);
-  print("%.2f \n", f);
-  print("%d \n",a);
-  print("%b \n",b);
-  print("%b \n",5>1);
-  return a;
+callable main()->int{
+  print("%s \n","aqib");
+  str name ="lost";
+  int num = 1;
+  int var1 = @test(name,num);
+  print("%s \n",name);
+  print("%d \n",num);
+  float f = 2.1;
+  @test2(f);
+  return var1;
 }
